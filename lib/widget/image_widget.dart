@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:project/app_constants.dart';
 
-enum TypeSrcImg { movieDb, external }
+enum TypeSrcImg { movieDb, external, tmdb }
 
 class ImageNetworkWidget extends StatelessWidget {
   const ImageNetworkWidget({
@@ -12,6 +12,7 @@ class ImageNetworkWidget extends StatelessWidget {
     this.width,
     this.onTap,
     this.radius = 0.0,
+    required BoxFit fit,
   });
 
   final String? imageSrc;

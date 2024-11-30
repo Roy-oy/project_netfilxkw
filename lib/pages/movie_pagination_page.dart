@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:project/database/profile_databse.dart';
 import 'package:project/models/movie_model.dart';
 import 'package:project/pages/movie_detail_page.dart';
 import 'package:project/providers/movie_get_discover_provider.dart';
@@ -8,10 +7,10 @@ import 'package:project/providers/movie_get_top_rated_provider.dart';
 import 'package:project/widget/item_movie_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'dart:ui';
 
-enum TypeMovie { discover, topRated, nowPlaying, myVideos }
+enum TypeMovie { discover, topRated, nowPlaying }
 
 class MoviePaginationPage extends StatefulWidget {
   const MoviePaginationPage({super.key, required this.type});
@@ -29,165 +28,202 @@ class _MoviePaginationPageState extends State<MoviePaginationPage> {
 
   @override
   void initState() {
-    if (widget.type != TypeMovie.myVideos) {
-      _pagingController.addPageRequestListener((pageKey) {
-        switch (widget.type) {
-          case TypeMovie.discover:
-            context.read<MovieGetDiscoverProvider>().getDiscoverWithPaging(
-                  context,
-                  pagingController: _pagingController,
-                  page: pageKey,
-                );
-            break;
-          case TypeMovie.topRated:
-            context.read<MovieGetTopRatedProvider>().getTopRatedWithPaging(
-                  context,
-                  pagingController: _pagingController,
-                  page: pageKey,
-                );
-            break;
-          case TypeMovie.nowPlaying:
-            context.read<MovieGetNowPlayingProvider>().getNowPlayingWithPaging(
-                  context,
-                  pagingController: _pagingController,
-                  page: pageKey,
-                );
-            break;
-          case TypeMovie.myVideos:
-            break;
-        }
-      });
-    }
+    _pagingController.addPageRequestListener((pageKey) {
+      switch (widget.type) {
+        case TypeMovie.discover:
+          context.read<MovieGetDiscoverProvider>().getDiscoverWithPaging(
+                context,
+                pagingController: _pagingController,
+                page: pageKey,
+              );
+          break;
+        case TypeMovie.topRated:
+          context.read<MovieGetTopRatedProvider>().getTopRatedWithPaging(
+                context,
+                pagingController: _pagingController,
+                page: pageKey,
+              );
+          break;
+        case TypeMovie.nowPlaying:
+          context.read<MovieGetNowPlayingProvider>().getNowPlayingWithPaging(
+                context,
+                pagingController: _pagingController,
+                page: pageKey,
+              );
+          break;
+      }
+    });
     super.initState();
   }
 
-  Widget _buildMyVideosView() {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: ProfileDatabse.instance
-          .getUserVideos(FirebaseAuth.instance.currentUser?.email ?? ''),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+  String _getPageTitle() {
+    switch (widget.type) {
+      case TypeMovie.discover:
+        return 'Discover Movies';
+      case TypeMovie.topRated:
+        return 'Top Rated Movies';
+      case TypeMovie.nowPlaying:
+        return 'Now Playing Movies';
+    }
+  }
 
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No videos added yet'));
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(16.0),
-          itemCount: snapshot.data!.length,
-          itemBuilder: (context, index) {
-            final video = snapshot.data![index];
-            return Card(
-              margin: const EdgeInsets.only(bottom: 16),
-              child: InkWell(
-                onTap: () async {
-                  final url = Uri.parse(video['videoUrl']);
-                  if (await canLaunchUrl(url)) {
-                    await launchUrl(url);
-                  }
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(4),
-                        ),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.play_circle_outline,
-                          size: 64,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            video['title'],
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Rating: ${video['rating'] ?? 'Not rated'}',
-                            style: const TextStyle(
-                              color: Colors.grey,
-                            ),
-                          ),
-                          Text(
-                            'Added by: ${video['userEmail']}',
-                            style: const TextStyle(
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+  Widget _buildGlassCard(Widget child) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Builder(builder: (_) {
-          switch (widget.type) {
-            case TypeMovie.discover:
-              return const Text('Discover Movies');
-            case TypeMovie.topRated:
-              return const Text('Top Rated Movies');
-            case TypeMovie.nowPlaying:
-              return const Text('Now Playing Movies');
-            case TypeMovie.myVideos:
-              return const Text('My Videos');
-          }
-        }),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0.5,
-      ),
-      body: widget.type == TypeMovie.myVideos
-          ? _buildMyVideosView()
-          : PagedListView.separated(
-              padding: const EdgeInsets.all(16.0),
-              pagingController: _pagingController,
-              builderDelegate: PagedChildBuilderDelegate<MovieModel>(
-                itemBuilder: (context, item, index) => ItemMovieWidget(
-                  movie: item,
-                  heightBackdrop: 260,
-                  widthBackdrop: double.infinity,
-                  heightPoster: 140,
-                  widthPoster: 80,
-                  onTap: () {
-                    Navigator.push(context, MaterialPageRoute(
-                      builder: (_) {
-                        return MovieDetailPage(id: item.id);
-                      },
-                    ));
-                  },
+      backgroundColor: const Color(0xFF0D0D0D),
+      body: Stack(
+        children: [
+          // Background gradient circles
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    Color(0xFFf5c518).withOpacity(0.2),
+                    Colors.transparent
+                  ],
                 ),
               ),
-              separatorBuilder: (context, index) => const SizedBox(height: 10),
             ),
+          ),
+          Positioned(
+            bottom: -150,
+            left: -150,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    Color(0xFFFF9000).withOpacity(0.2),
+                    Colors.transparent
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Main content
+          CustomScrollView(
+            slivers: [
+              // Custom AppBar
+              SliverAppBar(
+                expandedHeight: 120,
+                pinned: true,
+                backgroundColor: const Color(0xFF0D0D0D),
+                flexibleSpace: FlexibleSpaceBar(
+                  title: ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [Color(0xFFf5c518), Color(0xFFFF9000)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ).createShader(bounds),
+                    child: Text(
+                      _getPageTitle(),
+                      style: GoogleFonts.righteous(
+                        fontSize: 24,
+                        color: Colors.white,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                  centerTitle: true,
+                ),
+                leading: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CircleAvatar(
+                    backgroundColor: const Color(0xFF1F1F1F),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back,
+                          color: Color(0xFFf5c518)),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Pagination Content
+              PagedSliverList<int, MovieModel>(
+                pagingController: _pagingController,
+                builderDelegate: PagedChildBuilderDelegate<MovieModel>(
+                  itemBuilder: (context, item, index) => Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
+                    child: _buildGlassCard(
+                      ItemMovieWidget(
+                        movie: item,
+                        heightBackdrop: 260,
+                        widthBackdrop: double.infinity,
+                        heightPoster: 140,
+                        widthPoster: 80,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => MovieDetailPage(id: item.id),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  firstPageProgressIndicatorBuilder: (_) => Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Color(0xFFf5c518),
+                      ),
+                    ),
+                  ),
+                  newPageProgressIndicatorBuilder: (_) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFFf5c518),
+                        ),
+                      ),
+                    ),
+                  ),
+                  noItemsFoundIndicatorBuilder: (_) => Center(
+                    child: Text(
+                      'No movies found',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

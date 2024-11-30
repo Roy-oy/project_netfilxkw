@@ -31,6 +31,7 @@ class ItemMovieWidget extends Container {
 
   @override
   Decoration? get decoration => BoxDecoration(
+        color: const Color(0xFF1F1F1F),
         borderRadius: BorderRadius.circular(radius),
       );
 
@@ -42,17 +43,20 @@ class ItemMovieWidget extends Container {
                 '${movieDetail != null ? movieDetail!.backdropPath : movie!.backdropPath}',
             height: heightBackdrop,
             width: widthBackdrop,
+            fit: BoxFit.cover,
           ),
           Container(
             height: heightBackdrop,
             width: widthBackdrop,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
+            decoration: BoxDecoration(
+              color: const Color(0xFF1F1F1F),
+              borderRadius: BorderRadius.circular(radius),
+              gradient: const LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  Colors.black87,
+                  Color(0xFF1F1F1F),
                 ],
               ),
             ),
@@ -70,6 +74,7 @@ class ItemMovieWidget extends Container {
                   height: heightPoster,
                   width: widthPoster,
                   radius: 12,
+                  fit: BoxFit.cover,
                 ),
                 const SizedBox(height: 8),
                 Text(

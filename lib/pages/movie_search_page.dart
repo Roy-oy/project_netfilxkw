@@ -23,9 +23,15 @@ class MovieSearchPage extends SearchDelegate {
   ThemeData appBarTheme(BuildContext context) {
     return ThemeData(
       appBarTheme: const AppBarTheme(
-        foregroundColor: Colors.black,
-        backgroundColor: Colors.white,
-        elevation: 0.5,
+        foregroundColor: Colors.white,
+        backgroundColor: Color(0xFF1F1F1F),
+        elevation: 0,
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        hintStyle: TextStyle(color: Colors.white70),
+      ),
+      textTheme: const TextTheme(
+        titleLarge: TextStyle(color: Colors.white),
       ),
     );
   }
@@ -36,7 +42,7 @@ class MovieSearchPage extends SearchDelegate {
       onPressed: () => close(context, null),
       icon: const Icon(
         Icons.arrow_back,
-        color: Colors.black,
+        color: Colors.white,
       ),
     );
   }
@@ -52,82 +58,96 @@ class MovieSearchPage extends SearchDelegate {
     return Consumer<MovieSearchProvider>(
       builder: (_, provider, __) {
         if (query.isEmpty) {
-          return const Center(child: Text("Search Movies"));
+          return const Center(
+              child: Text("Search Movies",
+                  style: TextStyle(color: Colors.white70)));
         }
 
         if (provider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+              child: CircularProgressIndicator(color: Color(0xFFf5c518)));
         }
 
         if (provider.movies.isEmpty) {
-          return const Center(child: Text("Movies Not Found"));
+          return const Center(
+              child: Text("Movies Not Found",
+                  style: TextStyle(color: Colors.white70)));
         }
 
-        if (provider.movies.isNotEmpty) {
-          return ListView.separated(
+        return Container(
+          color: const Color(0xFF121212),
+          child: ListView.separated(
             padding: const EdgeInsets.all(16),
             itemBuilder: (_, index) {
               final movie = provider.movies[index];
-              return Stack(
-                children: [
-                  Row(
-                    children: [
-                      ImageNetworkWidget(
-                        imageSrc: movie.posterPath,
-                        height: 120,
-                        width: 80,
-                        radius: 10,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              movie.title,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+              return Card(
+                color: const Color(0xFF1F1F1F),
+                elevation: 0,
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          ImageNetworkWidget(
+                            imageSrc: movie.posterPath,
+                            height: 120,
+                            width: 80,
+                            radius: 10,
+                            fit: BoxFit.cover,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  movie.title,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  movie.overview,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              movie.overview,
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  Positioned.fill(
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          close(context, null);
-                          Navigator.push(context, MaterialPageRoute(
-                            builder: (_) {
-                              return MovieDetailPage(id: movie.id);
-                            },
-                          ));
-                        },
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                    Positioned.fill(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            close(context, null);
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (_) {
+                                return MovieDetailPage(id: movie.id);
+                              },
+                            ));
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               );
             },
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemCount: provider.movies.length,
-          );
-        }
-
-        return const Center(child: Text("Another Error on search movies"));
+          ),
+        );
       },
     );
   }

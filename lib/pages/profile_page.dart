@@ -1,220 +1,71 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:project/database/profile_databse.dart';
-import 'package:project/pages/login_page.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'login_page.dart';
+import 'dart:ui';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
-  _ProfilePageState createState() => _ProfilePageState();
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
-  final User? currentUser = FirebaseAuth.instance.currentUser;
-  final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _urlController = TextEditingController();
-  bool _isMyVideosSelected = true;
+class _ProfilePageState extends State<ProfilePage>
+    with SingleTickerProviderStateMixin {
+  final user = FirebaseAuth.instance.currentUser;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+
+    _animationController.forward();
+  }
 
   @override
   void dispose() {
-    _titleController.dispose();
-    _urlController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
-  Future<void> _addVideo() async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add New Video'),
-        content: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Video Title'),
-                validator: (value) {
-                  if (value?.isEmpty ?? true) {
-                    return 'Please enter a title';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _urlController,
-                decoration: const InputDecoration(labelText: 'YouTube URL'),
-                validator: (value) {
-                  if (value?.isEmpty ?? true) {
-                    return 'Please enter a URL';
-                  }
-                  final videoId = YoutubePlayer.convertUrlToId(value!);
-                  if (videoId == null) {
-                    return 'Please enter a valid YouTube URL';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (_formKey.currentState?.validate() ?? false) {
-                await ProfileDatabse.instance.insertVideo({
-                  'title': _titleController.text,
-                  'videoUrl': _urlController.text,
-                  'userEmail': currentUser?.email,
-                  'dateAdded': DateTime.now().toIso8601String(),
-                });
-                if (!mounted) return;
-                Navigator.pop(context);
-                setState(() {});
-                _titleController.clear();
-                _urlController.clear();
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+      (route) => false,
     );
   }
 
-  Widget _buildVideoList() {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _isMyVideosSelected
-          ? ProfileDatabse.instance.getUserVideos(currentUser?.email ?? '')
-          : ProfileDatabse.instance.getFavorites(currentUser?.email ?? ''),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(
-            child: Text(_isMyVideosSelected
-                ? 'No videos added yet'
-                : 'No favorite videos yet'),
-          );
-        }
-
-        return ListView.builder(
-          itemCount: snapshot.data!.length,
-          itemBuilder: (context, index) {
-            final video = snapshot.data![index];
-            return Card(
-              child: ListTile(
-                title: Text(video['title']),
-                subtitle: Text(_isMyVideosSelected
-                    ? 'Added by: ${video['userEmail']}'
-                    : 'Added to favorites'),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_isMyVideosSelected) ...[
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () => _editVideo(video),
-                      ),
-                    ],
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () async {
-                        if (_isMyVideosSelected) {
-                          await ProfileDatabse.instance
-                              .deleteVideo(video['id'] as int);
-                        } else {
-                          await ProfileDatabse.instance.deleteFavorite(
-                              video['movieId'] as int, currentUser?.email ?? '');
-                        }
-                        setState(() {});
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> _editVideo(Map<String, dynamic> video) async {
-    _titleController.text = video['title'];
-    _urlController.text = video['videoUrl'];
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Video'),
-        content: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Video Title'),
-                validator: (value) {
-                  if (value?.isEmpty ?? true) {
-                    return 'Please enter a title';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _urlController,
-                decoration: const InputDecoration(labelText: 'YouTube URL'),
-                validator: (value) {
-                  if (value?.isEmpty ?? true) {
-                    return 'Please enter a URL';
-                  }
-                  final videoId = YoutubePlayer.convertUrlToId(value!);
-                  if (videoId == null) {
-                    return 'Please enter a valid YouTube URL';
-                  }
-                  return null;
-                },
-              ),
-            ],
+  Widget _buildGlassCard({required Widget child}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
+          child: child,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (_formKey.currentState?.validate() ?? false) {
-                await ProfileDatabse.instance.updateVideo({
-                  'id': video['id'],
-                  'title': _titleController.text,
-                  'videoUrl': _urlController.text,
-                  'userEmail': currentUser?.email,
-                  'dateAdded': DateTime.now().toIso8601String(),
-                });
-                if (!mounted) return;
-                Navigator.pop(context);
-                setState(() {});
-                _titleController.clear();
-                _urlController.clear();
-              }
-            },
-            child: const Text('Update'),
-          ),
-        ],
       ),
     );
   }
@@ -222,71 +73,232 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Profile - ${currentUser?.email ?? ""}'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              if (!mounted) return;
-              Navigator.pushReplacement(
-                context, 
-                MaterialPageRoute(
-                  builder: (context) => const LoginPage()
-                )
-              );
-            },
+      backgroundColor: const Color(0xFF0D0D0D),
+      body: Stack(
+        children: [
+          // Background gradient circles
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    Color(0xFFf5c518).withOpacity(0.2),
+                    Colors.transparent
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -150,
+            left: -150,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    Color(0xFFFF9000).withOpacity(0.2),
+                    Colors.transparent
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Main content
+          SafeArea(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  children: [
+                    // Header with back button
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.arrow_back_ios,
+                            color: Color(0xFFf5c518),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        const Expanded(
+                          child: SizedBox(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Profile Header
+                    Hero(
+                      tag: 'profile_avatar',
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFf5c518), Color(0xFFFF9000)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFf5c518).withOpacity(0.3),
+                              blurRadius: 15,
+                              spreadRadius: 5,
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            user?.email?.substring(0, 1).toUpperCase() ?? 'U',
+                            style: GoogleFonts.righteous(
+                              fontSize: 48,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // User Email
+                    ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        colors: [Color(0xFFf5c518), Color(0xFFFF9000)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(bounds),
+                      child: Text(
+                        user?.email ?? 'User Email',
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+
+                    // Profile Options
+                    _buildGlassCard(
+                      child: Column(
+                        children: [
+                          _buildProfileOption(
+                            icon: Icons.person_outline,
+                            title: 'Account Settings',
+                            onTap: () {},
+                          ),
+                          const Divider(color: Colors.white10),
+                          _buildProfileOption(
+                            icon: Icons.notifications_outlined,
+                            title: 'Notifications',
+                            onTap: () {},
+                          ),
+                          const Divider(color: Colors.white10),
+                          _buildProfileOption(
+                            icon: Icons.lock_outline,
+                            title: 'Privacy & Security',
+                            onTap: () {},
+                          ),
+                          const Divider(color: Colors.white10),
+                          _buildProfileOption(
+                            icon: Icons.help_outline,
+                            title: 'Help & Support',
+                            onTap: () {},
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+
+                    // Logout Button
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: ElevatedButton(
+                        onPressed: _logout,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: Colors.red.withOpacity(0.8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.logout, color: Colors.white),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Logout',
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      body: Column(
-  children: [
-    Row(
-      children: [
-        Expanded(
-          child: TextButton(
-            onPressed: () => setState(() => _isMyVideosSelected = true),
-            style: ButtonStyle(
-              backgroundColor: ButtonStyleButton.allOrNull<Color>(
-                _isMyVideosSelected ? Colors.blue : Colors.grey[200],
+    );
+  }
+
+  Widget _buildProfileOption({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: const Color(0xFFf5c518),
+                size: 24,
               ),
-            ),
-            child: Text(
-              'My Videos', 
-              style: TextStyle(
-                color: _isMyVideosSelected ? Colors.white : Colors.black,
+              const SizedBox(width: 16),
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
+              const Spacer(),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white.withOpacity(0.5),
+                size: 16,
+              ),
+            ],
           ),
         ),
-        Expanded(
-          child: TextButton(
-            onPressed: () => setState(() => _isMyVideosSelected = false),
-            style: ButtonStyle(
-              backgroundColor: ButtonStyleButton.allOrNull<Color>(
-                !_isMyVideosSelected ? Colors.blue : Colors.grey[200],
-              ),
-            ),
-            child: Text(
-              'Favorite Videos',
-              style: TextStyle(
-                color: !_isMyVideosSelected ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-    Expanded(child: _buildVideoList()),
-  ],
-),
-      floatingActionButton: _isMyVideosSelected
-          ? FloatingActionButton(
-              onPressed: _addVideo,
-              child: const Icon(Icons.add),
-            )
-          : null,
+      ),
     );
   }
 }

@@ -10,21 +10,29 @@ class MovieGetDetailProvider with ChangeNotifier {
   MovieDetailModel? _movie;
   MovieDetailModel? get movie => _movie;
 
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
   void getDetail(BuildContext context, {required int id}) async {
+    _isLoading = true;
     _movie = null;
     notifyListeners();
+
     final result = await _movieRepository.getDetail(id: id);
+
     result.fold(
       (messageError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(messageError)),
         );
         _movie = null;
+        _isLoading = false;
         notifyListeners();
         return;
       },
       (response) {
         _movie = response;
+        _isLoading = false;
         notifyListeners();
         return;
       },
