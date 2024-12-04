@@ -12,15 +12,28 @@ import 'dart:ui';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class MovieDetailPage extends StatelessWidget {
+class MovieDetailPage extends StatefulWidget {
   const MovieDetailPage({super.key, required this.id});
 
   final int id;
 
+  @override
+  State<MovieDetailPage> createState() => _MovieDetailPageState();
+}
+
+class _MovieDetailPageState extends State<MovieDetailPage> {
+  bool isFavorite = false;
+
+  void toggleFavorite() {
+    setState(() {
+      isFavorite = !isFavorite;
+    });
+  }
+
   void _launchYouTube(String videoId) async {
-    final url = 'https://www.youtube.com/watch?v=$videoId';
-    if (await canLaunch(url)) {
-      await launch(url);
+    final url = Uri.parse('https://www.youtube.com/watch?v=$videoId');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -30,38 +43,54 @@ class MovieDetailPage extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(
           create: (_) =>
-              sl<MovieGetDetailProvider>()..getDetail(context, id: id),
+              sl<MovieGetDetailProvider>()..getDetail(context, id: widget.id),
         ),
         ChangeNotifierProvider(
           create: (_) =>
-              sl<MovieGetVideosProvider>()..getVideos(context, id: id),
+              sl<MovieGetVideosProvider>()..getVideos(context, id: widget.id),
         ),
       ],
       builder: (_, __) => Scaffold(
         backgroundColor: const Color(0xFF121212),
-        body: Consumer<MovieGetDetailProvider>(
-          builder: (_, provider, __) {
-            if (provider.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+        body: Stack(
+          children: [
+            Consumer<MovieGetDetailProvider>(
+              builder: (_, provider, __) {
+                if (provider.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-            if (provider.movie == null) {
-              return const Center(child: Text('Movie not found'));
-            }
+                if (provider.movie == null) {
+                  return const Center(child: Text('Movie not found'));
+                }
 
-            final movie = provider.movie!;
+                final movie = provider.movie!;
 
-            return CustomScrollView(
-              slivers: [
-                _buildAppBar(context, movie),
-                _buildVideoSection(),
-                _buildOverviewSection(movie),
-                _buildDetailsSection(movie),
-                _buildMetadataSection(movie),
-                SliverPadding(padding: EdgeInsets.only(bottom: 20)),
-              ],
-            );
-          },
+                return CustomScrollView(
+                  slivers: [
+                    _buildAppBar(context, movie),
+                    _buildVideoSection(),
+                    _buildOverviewSection(movie),
+                    _buildDetailsSection(movie),
+                    _buildMetadataSection(movie),
+                    SliverPadding(padding: EdgeInsets.only(bottom: 20)),
+                  ],
+                );
+              },
+            ),
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: FloatingActionButton(
+                onPressed: toggleFavorite,
+                backgroundColor: Color(0xFFf5c518),
+                child: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -104,7 +133,6 @@ class MovieDetailPage extends StatelessWidget {
                 fit: BoxFit.cover,
               ),
             ),
-            // Subtle gradient for text readability
             Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -121,7 +149,6 @@ class MovieDetailPage extends StatelessWidget {
                 ),
               ),
             ),
-            // Title and Tagline
             Positioned(
               left: 16,
               right: 16,

@@ -11,11 +11,13 @@ class MovieDetailModel {
     this.posterPath = '',
     required this.releaseDate,
     required this.revenue,
+    required this.runtime, // Tambahkan properti runtime
     required this.status,
     required this.tagline,
     required this.title,
     required this.voteAverage,
     required this.voteCount,
+    
   });
 
   final bool adult;
@@ -29,6 +31,7 @@ class MovieDetailModel {
   final String posterPath;
   final DateTime releaseDate;
   final int revenue;
+  final int runtime; 
   final String status;
   final String tagline;
   final String title;
@@ -38,16 +41,17 @@ class MovieDetailModel {
   factory MovieDetailModel.fromMap(Map<String, dynamic> json) =>
       MovieDetailModel(
         adult: json["adult"],
-        backdropPath: json["backdrop_path"],
+        backdropPath: json["backdrop_path"] ?? '',
         budget: json["budget"],
         genres: List<Genre>.from(json["genres"].map((x) => Genre.fromMap(x))),
         homepage: json["homepage"],
         id: json["id"],
         overview: json["overview"],
         popularity: json["popularity"].toDouble(),
-        posterPath: json["poster_path"],
+        posterPath: json["poster_path"] ?? '',
         releaseDate: DateTime.parse(json["release_date"]),
         revenue: json["revenue"],
+        runtime: json["runtime"] ?? 0, 
         status: json["status"],
         tagline: json["tagline"],
         title: json["title"],
@@ -57,7 +61,7 @@ class MovieDetailModel {
 
   @override
   String toString() {
-    return 'MovieDetailModel(adult: $adult, backdropPath: $backdropPath, budget: $budget, genres: $genres, homepage: $homepage, id: $id, overview: $overview, popularity: $popularity, posterPath: $posterPath, releaseDate: $releaseDate, revenue: $revenue, status: $status, tagline: $tagline, title: $title, voteAverage: $voteAverage, voteCount: $voteCount)';
+    return 'MovieDetailModel(adult: $adult, backdropPath: $backdropPath, budget: $budget, genres: $genres, homepage: $homepage, id: $id, overview: $overview, popularity: $popularity, posterPath: $posterPath, releaseDate: $releaseDate, revenue: $revenue, runtime: $runtime, status: $status, tagline: $tagline, title: $title, voteAverage: $voteAverage, voteCount: $voteCount)';
   }
 }
 

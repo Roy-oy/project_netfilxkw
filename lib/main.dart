@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:project/pages/movie_page.dart';
+import 'package:project/providers/favorite_provider.dart';
 import 'package:project/providers/movie_get_discover_provider.dart';
 import 'package:project/providers/movie_get_now_playing_provider.dart';
 import 'package:project/providers/movie_get_top_rated_provider.dart';
@@ -43,6 +44,9 @@ class App extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => sl<MovieSearchProvider>(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => sl<FavoriteProvider>(),
         ),
       ],
       child: MaterialApp(

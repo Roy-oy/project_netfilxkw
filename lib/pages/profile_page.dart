@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'login_page.dart';
 import 'dart:ui';
+
+import 'login_page.dart';
+import 'favorite_videos_page.dart'; // Pastikan file ini berisi halaman untuk video favorit
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -207,9 +209,17 @@ class _ProfilePageState extends State<ProfilePage>
                           ),
                           const Divider(color: Colors.white10),
                           _buildProfileOption(
-                            icon: Icons.lock_outline,
-                            title: 'Privacy & Security',
-                            onTap: () {},
+                            icon: Icons.favorite_outline,
+                            title: 'Favorite Videos',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const FavoriteVideosPage(),
+                                ),
+                              );
+                            },
                           ),
                           const Divider(color: Colors.white10),
                           _buildProfileOption(
