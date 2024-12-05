@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:project/models/movie_model.dart';
 import 'package:project/pages/movie_detail_page.dart';
 import 'package:project/providers/movie_get_discover_provider.dart';
-import 'package:project/providers/movie_get_top_rated_provider.dart';
 import 'package:project/providers/movie_get_now_playing_provider.dart';
+import 'package:project/providers/movie_get_top_rated_provider.dart';
 import 'package:project/widget/item_movie_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 
 class FavoriteVideosPage extends StatefulWidget {
   const FavoriteVideosPage({super.key});
+
 
   @override
   State<FavoriteVideosPage> createState() => _FavoriteVideosPageState();
@@ -26,7 +27,6 @@ class _FavoriteVideosPageState extends State<FavoriteVideosPage> {
   void initState() {
     super.initState();
     _pagingController.addPageRequestListener((pageKey) {
-      // Using MovieGetDiscoverProvider as an example; you can adjust as needed
       context.read<MovieGetDiscoverProvider>().getDiscoverWithPaging(
             context,
             pagingController: _pagingController,
@@ -45,16 +45,15 @@ class _FavoriteVideosPageState extends State<FavoriteVideosPage> {
     });
   }
 
-  Widget _buildGlassCard({required Widget child}) {
+  Widget _buildGlassCard(Widget child) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(12),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
-          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
           child: child,
@@ -106,6 +105,7 @@ class _FavoriteVideosPageState extends State<FavoriteVideosPage> {
           ),
 
           // Main content
+          // Main content
           CustomScrollView(
             slivers: [
               // Custom AppBar
@@ -156,64 +156,20 @@ class _FavoriteVideosPageState extends State<FavoriteVideosPage> {
                       vertical: 8.0,
                     ),
                     child: _buildGlassCard(
-                      child: Row(
-                        children: [
-                          // Thumbnail
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              image: DecorationImage(
-                                image: NetworkImage(item.posterPath ?? ''),
-                                fit: BoxFit.cover,
-                              ),
+                      ItemMovieWidget(
+                        movie: item,
+                        heightBackdrop: 260,
+                        widthBackdrop: double.infinity,
+                        heightPoster: 140,
+                        widthPoster: 80,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => MovieDetailPage(id: item.id),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          // Movie Details
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.title,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  item.overview ?? 'No description available.',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    color: Colors.white70,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Play Icon
-                          IconButton(
-                            icon: const Icon(
-                              Icons.play_circle_fill,
-                              color: Color(0xFFf5c518),
-                              size: 32,
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => MovieDetailPage(id: item.id),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -236,7 +192,7 @@ class _FavoriteVideosPageState extends State<FavoriteVideosPage> {
                   ),
                   noItemsFoundIndicatorBuilder: (_) => Center(
                     child: Text(
-                      'No favorite videos found.',
+                      'No favorite movies found.',
                       style: GoogleFonts.poppins(
                         color: Colors.white70,
                         fontSize: 16,
