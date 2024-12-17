@@ -1,66 +1,87 @@
-// import 'dart:async';
-// import 'package:sqflite/sqflite.dart';
-// import 'package:path/path.dart';
+import 'dart:async';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:project/models/movie_model.dart';
 
-// class DatabaseHelper {
-//   static final DatabaseHelper _instance = DatabaseHelper._internal();
-//   factory DatabaseHelper() => _instance;
+class DatabaseHelper {
+  static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
+  static Database? _database;
 
-//   static Database? _database;
+  DatabaseHelper._privateConstructor();
 
-//   DatabaseHelper._internal();
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _initDatabase();
+    return _database!;
+  }
 
-//   Future<Database> get database async {
-//     if (_database != null) return _database!;
-//     _database = await _initDatabase();
-//     return _database!;
-//   }
+  Future<Database> _initDatabase() async {
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, 'movies.db');
 
-//   Future<Database> _initDatabase() async {
-//     final dbPath = await getDatabasesPath();
-//     return openDatabase(
-//       join(dbPath, 'favorites.db'),
-//       onCreate: (db, version) {
-//         return db.execute('''
-//           CREATE TABLE favorites(
-//             id INTEGER PRIMARY KEY AUTOINCREMENT,
-//             title TEXT,
-//             posterPath TEXT
-//           )
-//         ''');
-//       },
-//       version: 1,
-//     );
-//   }
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE movies(
+            id INTEGER PRIMARY KEY,
+            title TEXT,
+            overview TEXT,
+            posterPath TEXT,
+            backdropPath TEXT,
+            voteAverage REAL,
+            voteCount INTEGER
+          )
+        ''');
+      },
+    );
+  }
 
-//   Future<void> insertFavorite(String title, String posterPath) async {
-//   final db = await database;
-//   await db.insert(
-//     'favorites',
-//     {
-//       'title': title.isNotEmpty ? title : 'Unknown Title',
-//       'posterPath': posterPath.isNotEmpty ? posterPath : '',
-//     },
-//     conflictAlgorithm: ConflictAlgorithm.replace,
-//   );
-// }
+  Future<int> insertMovie(MovieModel movie) async {
+    final db = await database;
+    return await db.insert(
+      'movies',
+      {
+        'id': movie.id,
+        'title': movie.title,
+        'overview': movie.overview,
+        'posterPath': movie.posterPath,
+        'backdropPath': movie.backdropPath,
+        'voteAverage': movie.voteAverage,
+        'voteCount': movie.voteCount,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
 
-//   Future<List<Map<String, dynamic>>> getFavorites() async {
-//     final db = await database;
-//     return await db.query('favorites');
-//   }
+  Future<List<MovieModel>> getAllMovies() async {
+    final db = await database;
+    final movies = await db.query('movies');
+    return movies.map((movie) => MovieModel.fromMap(movie)).toList();
+  }
 
-//   Future<void> addFavorite(String title, String posterPath) async {
-//     final db = await database;
-//     await db.insert(
-//       'favorites',
-//       {'title': title, 'posterPath': posterPath},
-//       conflictAlgorithm: ConflictAlgorithm.replace,
-//     );
-//   }
+  Future<int> deleteMovie(int id) async {
+    final db = await database;
+    return await db.delete(
+      'movies',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
 
-//   Future<void> removeFavorite(String title) async {
-//     final db = await database;
-//     await db.delete('favorites', where: 'title = ?', whereArgs: [title]);
-//   }
-// }
+  Future<MovieModel?> getMovieById(int id) async {
+    final db = await database;
+    final results = await db.query(
+      'movies',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (results.isNotEmpty) {
+      return MovieModel.fromMap(results.first);
+    } else {
+      return null;
+    }
+  }
+}
