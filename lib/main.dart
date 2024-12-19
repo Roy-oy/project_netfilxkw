@@ -15,13 +15,13 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+
   setup(); // Inisialisasi dependency injection
-  
+
   runApp(const App());
   FlutterNativeSplash.remove();
 }
@@ -46,7 +46,7 @@ class App extends StatelessWidget {
           create: (_) => sl<MovieSearchProvider>(),
         ),
         ChangeNotifierProvider(
-          create: (_) => sl<FavoriteProvider>(),
+          create: (_) => FavoriteProvider(),
         ),
       ],
       child: MaterialApp(

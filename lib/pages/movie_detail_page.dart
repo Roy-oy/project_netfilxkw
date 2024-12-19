@@ -11,6 +11,7 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'dart:ui';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:project/providers/favorite_provider.dart';
 
 class MovieDetailPage extends StatefulWidget {
   const MovieDetailPage({super.key, required this.id});
@@ -81,12 +82,36 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
             Positioned(
               bottom: 16,
               right: 16,
-              child: FloatingActionButton(
-                onPressed: toggleFavorite,
-                backgroundColor: Color(0xFFf5c518),
-                child: Icon(
-                  isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: Colors.black,
+              child: Consumer<MovieGetDetailProvider>(
+                builder: (_, movieProvider, __) => Consumer<FavoriteProvider>(
+                  builder: (context, favoriteProvider, child) {
+                    final isFavorite = movieProvider.movie != null &&
+                        favoriteProvider.isFavorite(movieProvider.movie!.id);
+                    return FloatingActionButton(
+                      onPressed: () {
+                        if (movieProvider.movie != null) {
+                          favoriteProvider.toggleFavorite(movieProvider.movie!);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isFavorite
+                                    ? 'Removed from favorites'
+                                    : 'Added to favorites',
+                              ),
+                              backgroundColor:
+                                  isFavorite ? Colors.red : Colors.green,
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        }
+                      },
+                      backgroundColor: const Color(0xFFf5c518),
+                      child: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.black,
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

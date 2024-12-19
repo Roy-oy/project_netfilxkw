@@ -38,8 +38,7 @@ class MoviePage extends StatelessWidget {
           SliverAppBar(
             expandedHeight: 80.0, // Reduced height
             title: Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Hero(
                   tag: 'logo',
@@ -49,33 +48,36 @@ class MoviePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Color(0xFFf5c518), Color(0xFFFF9000)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ).createShader(bounds),
-                  child: Text(
-                    'RuangFilm',
-                    style: GoogleFonts.righteous(
-                      // Changed from poppins to righteous
-                      fontSize: 30, // Slightly larger
-                      fontWeight: FontWeight.w600, // Adjusted weight
-                      color: Colors.white,
-                      letterSpacing: 1.0, // Increased letter spacing
-                      height: 1.2,
-                      shadows: const [
-                        Shadow(
-                          color: Colors.black45,
-                          offset: Offset(2, 2),
-                          blurRadius: 4,
-                        ),
-                        Shadow(
-                          color: Colors.black26,
-                          offset: Offset(4, 4),
-                          blurRadius: 8,
-                        ),
-                      ],
+                Flexible(
+                  child: ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [Color(0xFFf5c518), Color(0xFFFF9000)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ).createShader(bounds),
+                    child: Text(
+                      'RuangFilm',
+                      style: GoogleFonts.righteous(
+                        // Changed from poppins to righteous
+                        fontSize: 30, // Slightly larger
+                        fontWeight: FontWeight.w600, // Adjusted weight
+                        color: Colors.white,
+                        letterSpacing: 1.0, // Increased letter spacing
+                        height: 1.2,
+                        shadows: const [
+                          Shadow(
+                            color: Colors.black45,
+                            offset: Offset(2, 2),
+                            blurRadius: 4,
+                          ),
+                          Shadow(
+                            color: Colors.black26,
+                            offset: Offset(4, 4),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),

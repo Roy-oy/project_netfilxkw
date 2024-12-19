@@ -1,49 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:project/models/movie_model.dart';
 import 'package:project/pages/movie_detail_page.dart';
-import 'package:project/providers/movie_get_discover_provider.dart';
-import 'package:project/providers/movie_get_now_playing_provider.dart';
-import 'package:project/providers/movie_get_top_rated_provider.dart';
+import 'package:project/providers/favorite_provider.dart';
 import 'package:project/widget/item_movie_widget.dart';
 import 'package:provider/provider.dart';
-import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 
-class FavoriteVideosPage extends StatefulWidget {
+class FavoriteVideosPage extends StatelessWidget {
   const FavoriteVideosPage({super.key});
-
-
-  @override
-  State<FavoriteVideosPage> createState() => _FavoriteVideosPageState();
-}
-
-class _FavoriteVideosPageState extends State<FavoriteVideosPage> {
-  final PagingController<int, MovieModel> _pagingController = PagingController(
-    firstPageKey: 1,
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    _pagingController.addPageRequestListener((pageKey) {
-      context.read<MovieGetDiscoverProvider>().getDiscoverWithPaging(
-            context,
-            pagingController: _pagingController,
-            page: pageKey,
-          );
-      context.read<MovieGetTopRatedProvider>().getTopRatedWithPaging(
-                context,
-                pagingController: _pagingController,
-                page: pageKey,
-              );
-      context.read<MovieGetNowPlayingProvider>().getNowPlayingWithPaging(
-                context,
-                pagingController: _pagingController,
-                page: pageKey,
-              );
-    });
-  }
 
   Widget _buildGlassCard(Widget child) {
     return ClipRRect(
@@ -105,7 +69,6 @@ class _FavoriteVideosPageState extends State<FavoriteVideosPage> {
           ),
 
           // Main content
-          // Main content
           CustomScrollView(
             slivers: [
               // Custom AppBar
@@ -146,59 +109,67 @@ class _FavoriteVideosPageState extends State<FavoriteVideosPage> {
                 ),
               ),
 
-              // Pagination Content
-              PagedSliverList<int, MovieModel>(
-                pagingController: _pagingController,
-                builderDelegate: PagedChildBuilderDelegate<MovieModel>(
-                  itemBuilder: (context, item, index) => Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
-                    ),
-                    child: _buildGlassCard(
-                      ItemMovieWidget(
-                        movie: item,
-                        heightBackdrop: 260,
-                        widthBackdrop: double.infinity,
-                        heightPoster: 140,
-                        widthPoster: 80,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => MovieDetailPage(id: item.id),
+              // Favorites List
+              SliverPadding(
+                padding: const EdgeInsets.all(16.0),
+                sliver: Consumer<FavoriteProvider>(
+                  builder: (context, provider, child) {
+                    if (provider.favorites.isEmpty) {
+                      return SliverFillRemaining(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.favorite_border,
+                                size: 64,
+                                color: Colors.white.withOpacity(0.5),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No favorite movies yet',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white70,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final movie = provider.favorites[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16.0),
+                            child: _buildGlassCard(
+                              ItemMovieWidget(
+                                movie: movie.toMovieModel(),
+                                heightBackdrop: 260,
+                                widthBackdrop: double.infinity,
+                                heightPoster: 140,
+                                widthPoster: 80,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => MovieDetailPage(
+                                        id: movie.id,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           );
                         },
+                        childCount: provider.favorites.length,
                       ),
-                    ),
-                  ),
-                  firstPageProgressIndicatorBuilder: (_) => Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        const Color(0xFFf5c518),
-                      ),
-                    ),
-                  ),
-                  newPageProgressIndicatorBuilder: (_) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          const Color(0xFFf5c518),
-                        ),
-                      ),
-                    ),
-                  ),
-                  noItemsFoundIndicatorBuilder: (_) => Center(
-                    child: Text(
-                      'No favorite movies found.',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white70,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
             ],
@@ -206,11 +177,5 @@ class _FavoriteVideosPageState extends State<FavoriteVideosPage> {
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _pagingController.dispose();
-    super.dispose();
   }
 }

@@ -1,3 +1,5 @@
+import 'package:project/models/movie_model.dart';
+
 class MovieDetailModel {
   MovieDetailModel({
     required this.adult,
@@ -17,7 +19,6 @@ class MovieDetailModel {
     required this.title,
     required this.voteAverage,
     required this.voteCount,
-    
   });
 
   final bool adult;
@@ -31,7 +32,7 @@ class MovieDetailModel {
   final String posterPath;
   final DateTime releaseDate;
   final int revenue;
-  final int runtime; 
+  final int runtime;
   final String status;
   final String tagline;
   final String title;
@@ -51,7 +52,7 @@ class MovieDetailModel {
         posterPath: json["poster_path"] ?? '',
         releaseDate: DateTime.parse(json["release_date"]),
         revenue: json["revenue"],
-        runtime: json["runtime"] ?? 0, 
+        runtime: json["runtime"] ?? 0,
         status: json["status"],
         tagline: json["tagline"],
         title: json["title"],
@@ -62,6 +63,18 @@ class MovieDetailModel {
   @override
   String toString() {
     return 'MovieDetailModel(adult: $adult, backdropPath: $backdropPath, budget: $budget, genres: $genres, homepage: $homepage, id: $id, overview: $overview, popularity: $popularity, posterPath: $posterPath, releaseDate: $releaseDate, revenue: $revenue, runtime: $runtime, status: $status, tagline: $tagline, title: $title, voteAverage: $voteAverage, voteCount: $voteCount)';
+  }
+
+  MovieModel toMovieModel() {
+    return MovieModel(
+      backdropPath: backdropPath,
+      id: id,
+      overview: overview,
+      posterPath: posterPath,
+      title: title,
+      voteAverage: voteAverage,
+      voteCount: voteCount,
+    );
   }
 }
 
